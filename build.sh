@@ -63,6 +63,16 @@ CONFIG_VIDEO_INTEL_IPU_FW_LIB=y
 # CONFIG_VIDEO_INTEL_IPU_WERROR is not set
 CFG
 
+# Disable kernel Rust: Arch rolling rustc is ahead of what kernel 6.18.8's
+# target spec supports (RUSTC error: "custom targets are unstable").
+# IPU4 is pure C, so Rust is irrelevant. arch.config is merged last -> wins
+# over CONFIG_RUST=y coming from the main Arch config.
+cat >> arch.config <<'CFG'
+
+# --- disable Rust (toolchain skew in CI container) ---
+# CONFIG_RUST is not set
+CFG
+
 echo "=== sanity: pkgbase + source ==="
 grep -nE "^pkgbase=|0018-ipu4.patch" PKGBUILD
 
