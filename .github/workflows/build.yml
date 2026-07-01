@@ -1,0 +1,48 @@
+name: build-linux-surface-ipu4
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: false
+
+      - name: Show disk
+        run: df -h / /mnt
+
+      - name: Build in Arch container
+        run: |
+          set -euxo pipefail
+          sudo mkdir -p /mnt/build /mnt/out
+          sudo chmod 777 /mnt/build /mnt/out
+          docker run --rm \
+            -v "$PWD:/repo:ro" \
+            -v /mnt/build:/build \
+            -v /mnt/out:/out \
+            archlinux:base-devel \
+            bash /repo/build.sh
+
+      - name: List artifacts
+        run: ls -la /mnt/out
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-surface-ipu4-pkgs
+          path: /mnt/out/*.pkg.tar.zst
+          if-no-files-found: error
+          retention-days: 14
