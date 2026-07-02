@@ -47,6 +47,18 @@ p = p[:m.start()] + blk2 + p[m.end():]
 # rename package base
 p = p.replace("pkgbase=linux-surface\n", f"pkgbase={base}\n", 1)
 
+# Rust is disabled (see arch.config below) -> rust/*.rmeta and rust/*.so are
+# never produced, but _package-headers() copies them unconditionally. Guard
+# both lines so the headers package builds without Rust artifacts.
+p = p.replace(
+    '  install -Dt "$builddir/rust" -m644 rust/*.rmeta\n'
+    '  install -Dt "$builddir/rust" rust/*.so\n',
+    '  if ls rust/*.rmeta >/dev/null 2>&1; then\n'
+    '    install -Dt "$builddir/rust" -m644 rust/*.rmeta\n'
+    '    install -Dt "$builddir/rust" rust/*.so\n'
+    '  fi\n',
+    1)
+
 open("PKGBUILD", "w").write(p)
 print("patched PKGBUILD")
 PY
